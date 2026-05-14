@@ -564,7 +564,139 @@ WHERE r."rental_date" > (
 )
 ORDER BY a."last_name" ASC;
 
+
+--56. Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría ‘Musicʼ.
+
+WITH "actores_music" AS (
+
+    SELECT DISTINCT
+        fa."actor_id"
+    FROM "film_actor" AS "fa"
+    INNER JOIN "film_category" AS "fc"
+        ON fa."film_id" = fc."film_id"
+    INNER JOIN "category" AS "c"
+        ON fc."category_id" = c."category_id"
+    WHERE c."name" = 'Music'
+
+)
+
+SELECT 
+    a."first_name",
+    a."last_name"
+FROM "actor" AS "a"
+WHERE a."actor_id" NOT IN (
+    SELECT "actor_id"
+    FROM "actores_music"
+)
+ORDER BY a."last_name" ASC;
  
+--57. Encuentra el título de todas las películas que fueron alquiladas por más de 8 días.
+
+SELECT DISTINCT
+    f."title" AS "pelicula"
+FROM "film" AS "f"
+INNER JOIN "inventory" AS "i"
+    ON f."film_id" = i."film_id"
+INNER JOIN "rental" AS "r"
+    ON i."inventory_id" = r."inventory_id"
+WHERE (r."return_date" - r."rental_date") > INTERVAL '8 days'
+ORDER BY f."title" ASC;
+ 
+--58. Encuentra el título de todas las películas que son de la misma categoría que ‘Animationʼ.
+
+SELECT 
+    f."title" AS "pelicula"
+FROM "film" AS "f"
+INNER JOIN "film_category" AS "fc"
+    ON f."film_id" = fc."film_id"
+INNER JOIN "category" AS "c"
+    ON fc."category_id" = c."category_id"
+WHERE c."name" = 'Animation'
+ORDER BY f."title" ASC;
+ 
+--59. Encuentra los nombres de las películas que tienen la misma duración que la película con el título ‘Dancing Feverʼ. Ordena los resultados
+--alfabéticamente por título de película.
+
+SELECT 
+    f."title" AS "pelicula",
+    f."length" AS "duracion"
+FROM "film" AS "f"
+WHERE f."length" = (
+    SELECT f."length"
+    FROM "film" AS "f"
+    WHERE f."title" = 'Dancing Fever'
+)
+AND f."title" <> 'Dancing Fever'
+ORDER BY f."title" ASC;
+ 
+--60. Encuentra los nombres de los clientes que han alquilado al menos 7 películas distintas. Ordena los resultados alfabéticamente por apellido.
+
+SELECT 
+    c."first_name",
+    c."last_name",
+    COUNT(DISTINCT i."film_id") AS "peliculas_distintas"
+FROM "customer" AS "c"
+INNER JOIN "rental" AS "r"
+    ON c."customer_id" = r."customer_id"
+INNER JOIN "inventory" AS "i"
+    ON r."inventory_id" = i."inventory_id"
+GROUP BY c."customer_id", c."first_name", c."last_name"
+HAVING COUNT(DISTINCT i."film_id") >= 7
+ORDER BY c."last_name" ASC;
+ 
+--61.Encuentra la cantidad total de películas alquiladas por categoría y muestra el nombre de la categoría junto con el recuento de alquileres.
+
+SELECT 
+    c."name" AS "categoria",
+    COUNT(r."rental_id") AS "total_alquileres"
+FROM "category" AS "c"
+INNER JOIN "film_category" AS "fc"
+    ON c."category_id" = fc."category_id"
+INNER JOIN "film" AS "f"
+    ON fc."film_id" = f."film_id"
+INNER JOIN "inventory" AS "i"
+    ON f."film_id" = i."film_id"
+INNER JOIN "rental" AS "r"
+    ON i."inventory_id" = r."inventory_id"
+GROUP BY c."name"
+ORDER BY "total_alquileres" DESC;
+ 
+--62. Encuentra el número de películas por categoría estrenadas en 2006.
+
+SELECT 
+    c."name" AS "categoria",
+    COUNT(f."film_id") AS "numero_peliculas"
+FROM "category" AS "c"
+INNER JOIN "film_category" AS "fc"
+    ON c."category_id" = fc."category_id"
+INNER JOIN "film" AS "f"
+    ON fc."film_id" = f."film_id"
+WHERE f."release_year" = 2006
+GROUP BY c."name"
+ORDER BY "numero_peliculas" DESC;
+ 
+--63. Obtén todas las combinaciones posibles de trabajadores con las tiendas que tenemos.
+
+SELECT 
+    CONCAT(s."first_name", ' ', s."last_name") AS "trabajador",
+    st."store_id" AS "tienda"
+FROM "staff" AS "s"
+CROSS JOIN "store" AS "st"
+ORDER BY "trabajador", "tienda";
+ 
+--64.  Encuentra la cantidad total de películas alquiladas por cada cliente y muestra el ID del cliente, su nombre y apellido junto con la cantidad de
+--películas alquiladas.
+
+SELECT 
+    c."customer_id",
+    c."first_name",
+    c."last_name",
+    COUNT(r."rental_id") AS "total_alquileres"
+FROM "customer" AS "c"
+INNER JOIN "rental" AS "r"
+    ON c."customer_id" = r."customer_id"
+GROUP BY c."customer_id", c."first_name", c."last_name"
+ORDER BY "total_alquileres" DESC;
  
  
  
